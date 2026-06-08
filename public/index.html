@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChoreChart - Premium Chore Rotation & Monthly Calendar Generator</title>
+  <meta name="description" content="Generate monthly calendar entries for chores with sequential round-robin assignments, flexible weekly days, custom deep clean rotations, and instant ICS export.">
+  
+  <!-- Styling -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Hidden SVG Gradients for beautiful branding -->
+  <svg style="width:0; height:0; position:absolute;" aria-hidden="true">
+    <defs>
+      <linearGradient id="indigoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#818cf8" />
+        <stop offset="100%" stop-color="#c084fc" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <div class="app-container">
+    <!-- Semantic Navigation Sidebar -->
+    <aside class="sidebar" id="appSidebar">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+          <path d="M9 16l2 2 4-4" />
+        </svg>
+        <span class="brand-title">ChoreChart</span>
+      </div>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a class="nav-link active" data-tab="calendar" id="navLinkCalendar" role="tab" aria-selected="true">
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              <span>Calendar</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-tab="chores" id="navLinkChores" role="tab" aria-selected="false">
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+              </svg>
+              <span>Manage Chores</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-tab="monthlyGroups" id="navLinkGroups" role="tab" aria-selected="false">
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67" />
+              </svg>
+              <span>Deep Clean Cycles</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-tab="users" id="navLinkUsers" role="tab" aria-selected="false">
+              <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+              </svg>
+              <span>Users Manager</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span class="author-note">Designed & Built for your family</span>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content" id="appMainContent">
+      
+      <!-- 1. Calendar View Section -->
+      <section class="content-section active" id="calendarSection" role="tabpanel" aria-labelledby="navLinkCalendar">
+        <header class="section-header">
+          <div>
+            <h1 class="section-title">Schedule Calendar</h1>
+            <p class="section-subtitle">Chore assignments automatically generated in sequence</p>
+          </div>
+          
+          <!-- Month/Year select triggers -->
+          <div class="section-actions">
+            <!-- View Mode Segmented Toggle -->
+            <div class="view-toggle-group" id="calendarViewToggle" role="group" aria-label="Calendar View Mode">
+              <button class="view-toggle-btn active" data-view="month" aria-pressed="true">Month</button>
+              <button class="view-toggle-btn" data-view="week" aria-pressed="false">Week</button>
+              <button class="view-toggle-btn" data-view="day" aria-pressed="false">Day</button>
+            </div>
+
+            <div class="calendar-controls">
+              <button class="btn btn-secondary btn-icon" id="calPrevBtn" aria-label="Previous Period">◀</button>
+              
+              <div class="select-wrapper">
+                <select class="calendar-select" id="monthSelect" aria-label="Select Month"></select>
+              </div>
+              <div class="select-wrapper">
+                <select class="calendar-select" id="yearSelect" aria-label="Select Year"></select>
+              </div>
+              
+              <button class="btn btn-secondary btn-icon" id="calNextBtn" aria-label="Next Period">▶</button>
+            </div>
+            
+            <button class="btn btn-secondary" id="printBtn" aria-label="Print Current Calendar">
+              <svg style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"></path><path d="M6 14h12v8H6z"></path></svg>
+              <span>Print</span>
+            </button>
+            <button class="btn btn-primary" id="icsBtn" aria-label="Export to Google Calendar (ICS File)">
+              <svg style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+              <span>Export to Calendar (.ics)</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Dynamic Calendar Grid -->
+        <div class="calendar-container glass-panel" style="padding: 1.5rem;">
+          <div class="calendar-grid-header">
+            <div class="calendar-day-label">Sunday</div>
+            <div class="calendar-day-label">Monday</div>
+            <div class="calendar-day-label">Tuesday</div>
+            <div class="calendar-day-label">Wednesday</div>
+            <div class="calendar-day-label">Thursday</div>
+            <div class="calendar-day-label">Friday</div>
+            <div class="calendar-day-label">Saturday</div>
+          </div>
+          <div class="calendar-grid" id="calendarGrid" role="grid">
+            <!-- Programmatically rendered day cells -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Chores Manager Section -->
+      <section class="content-section" id="choresSection" role="tabpanel" aria-labelledby="navLinkChores">
+        <header class="section-header">
+          <div>
+            <h1 class="section-title">Household Chores</h1>
+            <p class="section-subtitle">Configure chore frequencies, schedules, and active rotation pools</p>
+          </div>
+          <button class="btn btn-primary" id="addChoreBtn" aria-label="Create New Chore">
+            <span>+ Add Chore</span>
+          </button>
+        </header>
+        
+        <div class="cards-grid" id="choresGrid">
+          <!-- Rendered chore cards -->
+        </div>
+      </section>
+
+      <!-- 3. Monthly Rotation Groups Section -->
+      <section class="content-section" id="monthlyGroupsSection" role="tabpanel" aria-labelledby="navLinkGroups">
+        <header class="section-header">
+          <div>
+            <h1 class="section-title">Deep Clean Cycles</h1>
+            <p class="section-subtitle">Optimized groups of monthly chores that cycle assignees each month</p>
+          </div>
+          <button class="btn btn-primary" id="addGroupBtn" aria-label="Create New Deep Clean Group">
+            <span>+ Create Cycle Group</span>
+          </button>
+        </header>
+
+        <div class="cards-grid" id="monthlyGroupsGrid">
+          <!-- Rendered group cards -->
+        </div>
+      </section>
+
+      <!-- 4. Users Manager Section -->
+      <section class="content-section" id="usersSection" role="tabpanel" aria-labelledby="navLinkUsers">
+        <header class="section-header">
+          <div>
+            <h1 class="section-title">Family Members</h1>
+            <p class="section-subtitle">Manage family members participating in active rotations</p>
+          </div>
+          <button class="btn btn-primary" id="addUserBtn" aria-label="Create New User">
+            <span>+ Add Family Member</span>
+          </button>
+        </header>
+
+        <div class="users-grid" id="usersGrid">
+          <!-- Rendered user panels -->
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ==========================================
+       MODALS SYSTEM (Glassmorphism Overlays)
+       ========================================== -->
+
+  <!-- Modal 1: Reassign / Override Single Date -->
+  <div class="modal-overlay" id="reassignModal" aria-modal="true" role="dialog">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2 class="modal-title">Reassign Chore</h2>
+        <button class="modal-close" aria-label="Close dialog">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+          You are overriding the assignee for <strong id="overrideChoreName" style="color:white;">Chore</strong> on <span id="overrideChoreDate" style="color: #818cf8;">Date</span>. 
+          This ad-hoc adjustment only applies to this specific day.
+        </p>
+        <div class="form-group">
+          <label class="form-label" for="overrideAssigneeSelect">Select Temporary Assignee</label>
+          <select class="form-control" id="overrideAssigneeSelect">
+            <!-- Rendered list of users -->
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-close-modal">Cancel</button>
+        <button class="btn btn-primary" id="saveOverrideBtn">Apply Override</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Add / Edit Standard Chore -->
+  <div class="modal-overlay" id="choreModal" aria-modal="true" role="dialog">
+    <div class="modal-container" style="max-width: 580px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="choreFormTitle">Add Household Chore</h2>
+        <button class="modal-close" aria-label="Close dialog">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="choreId">
+        
+        <div class="form-group">
+          <label class="form-label" for="choreName">Chore Name</label>
+          <input type="text" class="form-control" id="choreName" placeholder="e.g., Load Dishwasher">
+        </div>
+
+        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div>
+            <label class="form-label" for="choreFrequency">Frequency</label>
+            <select class="form-control" id="choreFrequency">
+              <option value="weekly">Weekly / Multi-Day</option>
+              <option value="daily">Daily</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="choreStartDate">Rotation Start Date</label>
+            <input type="date" class="form-control" id="choreStartDate">
+          </div>
+        </div>
+
+        <!-- Weekly Days Selector -->
+        <div class="form-group" id="weeklyDaysGroup">
+          <label class="form-label">Active Days of the Week</label>
+          <div class="checkbox-group">
+            <label class="checkbox-btn">
+              <input type="checkbox" value="0">
+              <span class="checkbox-btn-label">Sun</span>
+            </label>
+            <label class="checkbox-btn">
+              <input type="checkbox" value="1">
+              <span class="checkbox-btn-label">Mon</span>
+            </label>
+            <label class="checkbox-btn">
+              <input type="checkbox" value="2">
+              <span class="checkbox-btn-label">Tue</span>
+            </label>
+            <label class="checkbox-btn">
+              <input type="checkbox" value="3">
+              <span class="checkbox-btn-label">Wed</span>
+            </label>
+            <label class="checkbox-btn">
+              <input type="checkbox" value="4">
+              <span class="checkbox-btn-label">Thu</span>
+            </label>
+            <label class="checkbox-btn">
+              <input type="checkbox" value="5">
+              <span class="checkbox-btn-label">Fri</span>
+            </label>
+            <label class="checkbox-btn">
+              <input type="checkbox" value="6">
+              <span class="checkbox-btn-label">Sat</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Rotation pool ordering selector -->
+        <div class="form-group">
+          <label class="form-label">Rotation Pool & Order (Drag to Reorder)</label>
+          <div class="user-select-list" id="formPoolList" role="listbox">
+            <!-- User selection list with grab handles -->
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="choreStartIndex">Starting Person</label>
+          <select class="form-control" id="choreStartIndex">
+            <!-- Automatically computed based on pool above -->
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-close-modal">Cancel</button>
+        <button class="btn btn-primary" id="saveChoreBtn">Save Chore</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Add User -->
+  <div class="modal-overlay" id="userModal" aria-modal="true" role="dialog">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2 class="modal-title">Add Family Member</h2>
+        <button class="modal-close" aria-label="Close dialog">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="userName">Name</label>
+          <input type="text" class="form-control" id="userName" placeholder="e.g., Mom">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Avatar Color theme</label>
+          <div class="checkbox-group" id="userColorPalette">
+            <!-- Color Palette Avatars render here -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-close-modal">Cancel</button>
+        <button class="btn btn-primary" id="saveUserBtn">Create Member</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Add Monthly Deep Clean Group -->
+  <div class="modal-overlay" id="groupModal" aria-modal="true" role="dialog">
+    <div class="modal-container" style="max-width: 580px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Create Deep Clean Cycle</h2>
+        <button class="modal-close" aria-label="Close dialog">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="groupName">Group Name</label>
+          <input type="text" class="form-control" id="groupName" placeholder="e.g., Monthly Deep Clean Weekend">
+        </div>
+
+        <div class="form-group" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem;">
+          <div>
+            <label class="form-label" for="groupStartMonth">Start Cycle Month</label>
+            <input type="month" class="form-control" id="groupStartMonth">
+          </div>
+          <div>
+            <label class="form-label" for="groupWeekIndex">Which Weekend?</label>
+            <select class="form-control" id="groupWeekIndex">
+              <option value="0">1st Weekend</option>
+              <option value="1">2nd Weekend</option>
+              <option value="2">3rd Weekend</option>
+              <option value="3">4th Weekend</option>
+              <option value="4">Last Weekend</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="groupDayOfWeek">Scheduled Day</label>
+          <select class="form-control" id="groupDayOfWeek">
+            <option value="6">Saturday</option>
+            <option value="0">Sunday</option>
+            <option value="5">Friday</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="groupChoresInput">Monthly Chores (One Per Line)</label>
+          <div id="groupChoresSelectContainer">
+            <!-- Textarea for custom chore lines -->
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Rotation Pool & Order (Drag to Reorder)</label>
+          <div class="user-select-list" id="formGroupPoolList" role="listbox">
+            <!-- User selection list with grab handles -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-close-modal">Cancel</button>
+        <button class="btn btn-primary" id="saveGroupBtn">Save Group Cycle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>

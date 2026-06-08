@@ -1,0 +1,4 @@
+# Firebase Hosting cache & logs
+.firebase/
+firebase-debug.log
+.DS_Store
